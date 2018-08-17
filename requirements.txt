@@ -1,0 +1,5 @@
+ConfigParser
+pymongo
+loremipsum
+multiprocessing
+names
