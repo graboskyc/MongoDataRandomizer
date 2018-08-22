@@ -1,5 +1,4 @@
 ConfigParser
 pymongo
-loremipsum
+faker
 multiprocessing
-names
