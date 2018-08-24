@@ -36,7 +36,7 @@ optional arguments:
 ### Random Inserts
 
 ```
-graboskycMBP:~ graboskyc$ MongoRandomizer -c mongodb://localhost -t 5 -b 500 -p 10 -w 0 -j insert
+graboskycMBP:~ graboskyc$ MongoRandomizer -c mongodb://localhost -t 5 -b 500 -p 10 -w 1 -j insert
 
 About to enter data in: 
 	Threads: 5
@@ -44,7 +44,7 @@ About to enter data in:
 	Collection: democollection
 	Blocksize: 1000
 	Max Blocks: 500
-	Write Concern: 0
+	Write Concern: 1
 	Journaling: True
 
 This process will continue until you press control+c or break
