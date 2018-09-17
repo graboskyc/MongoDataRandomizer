@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
 	name='MongoRandomizer',
-	version='0.2.01',
+	version='0.3.6',
 	py_modules=['MongoRandomizer'],
 	packages=find_packages(),
 	install_requires=['requests',],

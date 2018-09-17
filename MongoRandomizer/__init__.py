@@ -12,6 +12,7 @@ import threading
 from pprint import pprint
 import time
 from faker import Faker
+import math
 
 # Globals
 _DBNAME = "demodb"
@@ -22,16 +23,22 @@ _BLOCKSIZE = 1000
 _PAD = 0
 _WC = 0
 _J = False
+# NYC
+_LATITUDE = 40.84
+_LONGITUDE = -73.87
+_RADIUSKM = 150
+_G = False
 
 def cli():
     try:
-        global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J
+        global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J, _G
 
         parser = argparse.ArgumentParser(description='CLI Tool for continually writing random data to a MongoDB database for testing purposes')
         # config string
         parser.add_argument('-c', action="store", dest="cs", help="server connection string")
         parser.add_argument('-t', action="store", dest="t", help="threads to use, if left off, use 10")
         parser.add_argument('-b', action="store", dest="b", help="blocksize to use. if not inclided, use 1000")
+        parser.add_argument('-m', action="store", dest="m", help="max blocks to use. if not inclided, use 1000")
         parser.add_argument('-p', action="store", dest="p", help="additional chars of padding to increase document size")
 
         parser.add_argument('-w', action="store", dest="wc", help="write concern to use. if blank, none used")
@@ -41,6 +48,7 @@ def cli():
 
         # flags
         parser.add_argument("-j", "--journaling", help="if omitted, false. if flag enabled, journal", action="store_true")
+        parser.add_argument("-g", "--geo", help="if omitted, use customer data. if flag enabled push geographic data", action="store_true")
 
         arg = parser.parse_args()
         homedir = expanduser("~")
@@ -64,8 +72,11 @@ def cli():
         if(arg.t != None):
             _THREADS = int(arg.t)
 
+        if(arg.m != None):
+            _MAXBLOCKS = int(arg.m)
+
         if(arg.b != None):
-            _MAXBLOCKS = int(arg.b)
+            _BLOCKSIZE = int(arg.b)
         
         if(arg.p != None):
             _PAD = int(arg.p)
@@ -78,6 +89,10 @@ def cli():
 
         if(arg.journaling):
             _J = True
+
+        if(arg.geo):
+            _COLNAME = "geo"
+            _G = True
 
         if (arg.task.lower() == "clean"):
             clearDB(cp)
@@ -110,7 +125,7 @@ def clearDB(cp):
         exit(6)
 
 def insertDB(cp):
-    global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J
+    global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J, _G
 
     f = Faker()
 
@@ -123,11 +138,12 @@ def insertDB(cp):
     print "\tMax Blocks: " + str(_MAXBLOCKS)
     print "\tWrite Concern: " + str(_WC)
     print "\tJournaling: " + str(_J)
+    print "\tGeo Data?: " + str(_G)
     print "=================================================\n\n"
     print "This process will continue until you press control+c or break \n\n"
 
     for index in range(0, _THREADS):
-        p = Process(target=r_insertRecord, args=(f, cp.get('mdb','cs'), _DBNAME, _COLNAME, _WC, _J, _MAXBLOCKS, _BLOCKSIZE, _PAD))
+        p = Process(target=r_insertRecord, args=(f, cp.get('mdb','cs'), _DBNAME, _COLNAME, _WC, _J, _MAXBLOCKS, _BLOCKSIZE, _PAD, _G))
         p.start()
         p.join()
 
@@ -167,7 +183,8 @@ def r_readRecords(handle):
     r_readRecords(handle)
 
 # RECURSIVE FUNCTION!
-def r_insertRecord(f, connStr, dbname, colname, wc, journaling, mb, bs, padding):
+def r_insertRecord(f, connStr, dbname, colname, wc, journaling, mb, bs, padding, g):
+    global _LATITUDE, _LONGITUDE, _RADIUSKM
     conn = pymongo.MongoClient(connStr, w=wc, j=journaling)
     handle = conn[dbname][colname]
 
@@ -177,25 +194,64 @@ def r_insertRecord(f, connStr, dbname, colname, wc, journaling, mb, bs, padding)
     for i in xrange(mb):
         docs = []
         for j in xrange(bs):
-            presc = []
-            for p in range(random.randint(1,25)):
-                presc.append(f.text(random.randint(10,30)))
-            docs.append(
-                {
-                    "accountNumber": random.randint(1,1000),
-                    "fullname": f.name(),
-                    "occupation": f.job(),
-                    "address": str(random.randint(1,999))+ " " + f.last_name() + " " + random.choice(loc),
-                    "state": random.choice(states),
-                    "zipcode": str(random.randint(10000,99999)),
-                    "singupDate": datetime.utcnow(),
-                    "payment": random.randrange(50,200,5),
-                    "copay": random.randrange(20,60,10),
-                    "deductible": random.randrange(100,500,100),
+            if(g):
+                radDeg = _RADIUSKM * (1 / 110.54)
+                lat = _LATITUDE + random.uniform(0, radDeg)
+                lon = _LONGITUDE + random.uniform(0, radDeg)
+                #print str(lat) + "," + str(lon)
+                docs.append({
+                    "padding": "a"*padding,
                     "notes": f.text(),
-                    "prescriptions":presc,
-                    "padding": "a"*padding
-                    }
-                )
+                    "name": f.name(),
+                    "location": {"type": "Point", "coordinates": [lon, lat]}
+                })
+                lat = _LATITUDE - random.uniform(0, radDeg)
+                lon = _LONGITUDE + random.uniform(0, radDeg)
+                #print str(lat) + "," + str(lon)
+                docs.append({
+                    "padding": "a"*padding,
+                    "notes": f.text(),
+                    "name": f.name(),
+                    "location": {"type": "Point", "coordinates": [lon, lat]}
+                })
+                lat = _LATITUDE + random.uniform(0, radDeg)
+                lon = _LONGITUDE - random.uniform(0, radDeg)
+                #print str(lat) + "," + str(lon)
+                docs.append({
+                    "padding": "a"*padding,
+                    "notes": f.text(),
+                    "name": f.name(),
+                    "location": {"type": "Point", "coordinates": [lon, lat]}
+                })
+                lat = _LATITUDE - random.uniform(0, radDeg)
+                lon = _LONGITUDE - random.uniform(0, radDeg)
+                #print str(lat) + "," + str(lon)
+                docs.append({
+                    "padding": "a"*padding,
+                    "notes": f.text(),
+                    "name": f.name(),
+                    "location": {"type": "Point", "coordinates": [lon, lat]}
+                })
+            else:
+                presc = []
+                for p in range(random.randint(1,25)):
+                    presc.append(f.text(random.randint(10,30)))
+                docs.append(
+                    {
+                        "accountNumber": random.randint(1,1000),
+                        "fullname": f.name(),
+                        "occupation": f.job(),
+                        "address": str(random.randint(1,999))+ " " + f.last_name() + " " + random.choice(loc),
+                        "state": random.choice(states),
+                        "zipcode": str(random.randint(10000,99999)),
+                        "singupDate": datetime.utcnow(),
+                        "payment": random.randrange(50,200,5),
+                        "copay": random.randrange(20,60,10),
+                        "deductible": random.randrange(100,500,100),
+                        "notes": f.text(),
+                        "prescriptions":presc,
+                        "padding": "a"*padding
+                        }
+                    )
         handle.insert_many(docs)
-    r_insertRecord(handle, mb, bs, padding)
+    r_insertRecord(f, connStr, dbname, colname, wc, journaling, mb, bs, padding, g)
