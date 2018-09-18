@@ -31,7 +31,7 @@ _G = False
 
 def cli():
     try:
-        global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J, _G
+        global _DBNAME, _COLNAME, _THREADS, _MAXBLOCKS, _BLOCKSIZE, _PAD, _WC, _J, _G, _LATITUDE, _LONGITUDE, _RADIUSKM
 
         parser = argparse.ArgumentParser(description='CLI Tool for continually writing random data to a MongoDB database for testing purposes')
         # config string
@@ -49,6 +49,7 @@ def cli():
         # flags
         parser.add_argument("-j", "--journaling", help="if omitted, false. if flag enabled, journal", action="store_true")
         parser.add_argument("-g", "--geo", help="if omitted, use customer data. if flag enabled push geographic data", action="store_true")
+        parser.add_argument('-o', action="store", dest="origin", help="if using the g flag, this is the origin point. use format lat,long,radiusinkm")
 
         arg = parser.parse_args()
         homedir = expanduser("~")
@@ -93,6 +94,11 @@ def cli():
         if(arg.geo):
             _COLNAME = "geo"
             _G = True
+            if(arg.origin != None):
+                origin = arg.origin.split(",")
+                _LATITUDE = float(origin[0])
+                _LONGITUDE = float(origin[1])
+                _RADIUSKM = float(origin[2])
 
         if (arg.task.lower() == "clean"):
             clearDB(cp)
