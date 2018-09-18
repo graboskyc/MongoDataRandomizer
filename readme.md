@@ -15,7 +15,9 @@ This is a simple data randoizer to load up a MongoDB database with data.
 ### Help
 ```
 graboskycMBP:~ graboskyc$ MongoRandomizer -h
-usage: MongoRandomizer [-h] [-c CS] [-t T] [-b B] [-p P] [-w WC] [-j] task
+usage: MongoRandomizer [-h] [-c CS] [-t T] [-b B] [-m M] [-p P] [-w WC] [-j]
+                       [-g]
+                       task
 
 CLI Tool for continually writing random data to a MongoDB database for testing
 purposes
@@ -28,9 +30,12 @@ optional arguments:
   -c CS             server connection string
   -t T              threads to use, if left off, use 10
   -b B              blocksize to use. if not inclided, use 1000
+  -m M              max blocks to use. if not inclided, use 1000
   -p P              additional chars of padding to increase document size
   -w WC             write concern to use. if blank, none used
   -j, --journaling  if omitted, false. if flag enabled, journal
+  -g, --geo         if omitted, use customer data. if flag enabled push
+                    geographic data
   ```
 
 ### Random Inserts
@@ -85,5 +90,22 @@ This process will continue until you press control+c or break
 	"state" : "WY",
 	"fullname" : "Donna Webster",
 	"deductible" : 300
+}
+```
+
+### Sample Geo Document
+```
+{
+	"_id" : ObjectId("5b9fd129cc39341758236d80"),
+	"padding" : "",
+	"notes" : "Wait mean performance view billion plan civil this. Cup prevent season.\nEffect thought while get market war wife oil.",
+	"name" : "Mr. Antonio Salas MD",
+	"location" : {
+		"type" : "Point",
+		"coordinates" : [
+			-73.59354663520122,
+			42.00216814289992
+		]
+	}
 }
 ```
