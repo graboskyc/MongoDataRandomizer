@@ -2,3 +2,4 @@ ConfigParser
 pymongo
 faker
 multiprocessing
+dnspython
