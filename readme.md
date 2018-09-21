@@ -1,6 +1,6 @@
 # MongoDataRandomizer
 
-This is a simple data randoizer to load up a MongoDB database with data.
+This is a simple data randomizer to load up a MongoDB database with data. It supports two document types: a generic patient data document and a geographic document.
 
 ## Installation
 ### From PyPI

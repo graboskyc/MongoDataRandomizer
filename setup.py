@@ -7,7 +7,7 @@ with open("readme.md", "r") as fh:
 
 setup(
 	name='MongoRandomizer',
-	version='0.3.11',
+	version='0.3.12',
 	py_modules=['MongoRandomizer'],
 	packages=find_packages(),
 	install_requires=required,
